@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+	<!-- 1-设定自动扫描组件的base package包 -->
+	<context:component-scan base-package="com.qianfeng"></context:component-scan>
+	<!-- 2-读取c3p0db.properties的信息，生成数据源连接池dataSource -->
+	<context:property-placeholder location="classpath:c3p0db.properties" />
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${connection.driverClass}"></property>
+		<property name="jdbcUrl" value="${connection.url}"></property>
+		<property name="user" value="${connection.username}"></property>
+		<property name="password" value="${connection.password}"></property>
+		<property name="minPoolSize" value="${c3p0.min_size}"></property>
+		<property name="maxPoolSize" value="${c3p0.max_size}"></property>
+		<property name="acquireIncrement" value="${c3p0.acquire_increment}"></property>
+		<property name="checkoutTimeout" value="${c3p0.timeout}"></property>
+		<property name="idleConnectionTestPeriod" value="${c3p0.idle_test_period}"></property>
+		<property name="maxStatements" value="${c3p0.max_statements}"></property>
+	</bean>
+	<!-- 3-依赖dataSource，生成sessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="mapperLocations" value="classpath:com/qianfeng/dao/mapper/*.xml"></property>
+		<property name="configLocation" value="classpath:sqlMappingConfig.xml"></property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.qianfeng.dao.idao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<!-- enable transaction annotation support -->
+	<tx:annotation-driven transaction-manager="txManager" />
+	<!-- 配置注解，实现动态访问 -->
+	<mvc:annotation-driven></mvc:annotation-driven>
+	<!-- 实现静态访问 -->
+	<mvc:default-servlet-handler />
+	<mvc:resources location="/views/" mapping="/views/*.html" />
+	<!-- 配置解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+	<!-- 配置json解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="order" value="1"></property>
+		<property name="mediaTypes">
+			<map>
+				<entry key="json" value="application/json"></entry>
+				<entry key="xml" value="application/xml"></entry>
+				<entry key="htm" value="text/html"></entry>
+			</map>
+		</property>
+		<property name="defaultViews">
+			<list>
+				<bean
+					class="org.springframework.web.servlet.view.json.MappingJackson2JsonView"></bean>
+			</list>
+		</property>
+	</bean>
+	<!-- 文件上传配置 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="20971520"></property>
+		<property name="defaultEncoding" value="utf-8"></property>
+		<property name="resolveLazily" value="true"></property>
+	</bean>
+</beans>

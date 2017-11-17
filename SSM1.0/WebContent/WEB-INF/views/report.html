@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>报表页面</title>
+<link
+	href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+	rel="stylesheet">
+<style>
+* {
+	margin: 10px;
+}
+</style>
+</head>
+
+<body>
+
+	<button id="reportBtn" class="btn btn-success">获取报表</button>
+	<table class="table table-hover" style="display: none;">
+		<caption>员工信息</caption>
+		<thead>
+			<tr>
+				<th>部门</th>
+				<th>区域</th>
+				<th>最大工资</th>
+				<th>最小工资</th>
+				<th>平均工资</th>
+				<th>部门人数</th>
+				<th>总工资</th>
+			</tr>
+		</thead>
+		<tbody id="content">
+
+		</tbody>
+	</table>
+	<script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+	<script
+		src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script>
+		$(function() {
+			$("#reportBtn").click(function() {
+
+				$("#content").empty();
+				$("table").show(1000);
+				$.ajax({
+					//						url: "http://localhost:8080/Struts2Demo/",
+					url : 'http://localhost:8080/SSM1.0/report/repostDeptInfo.do',
+					type : "get",
+					asynch : true,
+					dataType : "json",
+					contentType: "application/json",
+					success : function(data) {
+						alert(1234);
+						str = data;
+						for (var i = 0; i < data.length; i++) {
+							var emp = data[i];
+							//1-创建tr节点
+							$tr = $(document.createElement("tr"));
+							for (j in emp) {
+								//2-创建td节点
+								$td = $(document.createElement("td"));
+								//3-向tr节点添加
+								$td.text(emp[j]);
+								$tr.append($td);
+							}
+							//4-向#content添加tr节点
+							$("#content").append($tr);
+						}
+
+					}
+				});
+			});
+		});
+	</script>
+	<button id="btn">获取报表</button>
+	<div id="main" style="width: 600px; height: 400px;"></div>
+	<script src="https://cdn.bootcss.com/echarts/3.7.2/echarts-en.js"></script>
+	<script>
+		$(function() {
+			$("#btn").click(function() {
+				var dname = [];
+				var maxSal = [];
+				var minSal = [];
+				var avgSal = [];
+				var counter = [];
+				var sumSal = [];
+				for (var i = 0; i < str.length; i++) {
+					var emp = str[i];
+					dname.push(emp.dname);
+					maxSal.push(emp.maxSal);
+					minSal.push(emp.minSal);
+					avgSal.push(emp.avgSal);
+					counter.push(emp.counter);
+					sumSal.push(emp.sumSal);
+				}
+				$("#main").show(100);
+				var myChart = echarts.init(document.getElementById('main'));
+				option = {
+					title : {
+						text : '部门报表',
+						subtext : ''
+					},
+					tooltip : {
+						trigger : 'axis',
+						axisPointer : {
+							type : 'shadow'
+						}
+					},
+					legend : {
+						data : [ '最大工资', '最小工资', '平均工资', '部门人数', '总工资' ]
+					},
+					grid : {
+						left : '3%',
+						right : '4%',
+						bottom : '3%',
+						containLabel : true
+					},
+					xAxis : {
+						type : 'value',
+						boundaryGap : [ 0, 0.05 ]
+					},
+					yAxis : {
+						type : 'category',
+						data : dname
+					},
+					series : [ {
+						name : '最大工资',
+						type : 'bar',
+						data : maxSal
+					}, {
+						name : '最小工资',
+						type : 'bar',
+						data : minSal
+					}, {
+						name : '平均工资',
+						type : 'bar',
+						data : avgSal
+					}, {
+						name : '部门人数',
+						type : 'bar',
+						data : counter
+					}, {
+						name : '总工资',
+						type : 'bar',
+						data : sumSal
+					} ]
+				};
+				myChart.setOption(option);
+			});
+		});
+	</script>
+</body>
+
+</html>
